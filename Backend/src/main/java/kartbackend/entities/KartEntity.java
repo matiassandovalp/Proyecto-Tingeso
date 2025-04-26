@@ -20,8 +20,28 @@ public class KartEntity {
     private String kartId;
 
     private String modelo;
+
+    @Temporal(TemporalType.DATE)
     private Date ultimoMantenimiento;
 
-    @ManyToMany(mappedBy = "karts")
-    private List<ReservaEntity> reservas;
+    private boolean estado;
+
+    @ElementCollection
+    private List<String> reservasIds;
+
+    public String getModelo() {
+        return modelo;
+    }
+
+    public Date getUltimoMantenimiento() {
+        return ultimoMantenimiento;
+    }
+
+    public void setModelo(String modelo) {
+        this.modelo = modelo;
+    }
+
+    public void setUltimoMantenimiento(Date ultimoMantenimiento) {
+        this.ultimoMantenimiento = ultimoMantenimiento;
+    }
 }
