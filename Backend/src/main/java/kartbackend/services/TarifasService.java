@@ -1,22 +1,16 @@
 package kartbackend.services;
 
 import org.springframework.stereotype.Service;
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
-import java.time.DayOfWeek;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 
 @Service
 public class TarifasService {
 
-    public int calcularTarifaBase(int numeroVueltas) {
-        return switch (numeroVueltas) {
-            case 10 -> 15000;
-            case 15 -> 20000;
-            case 20 -> 25000;
-            default -> throw new IllegalArgumentException("Número de vueltas inválido");
+    public int obtenerTarifa(String tarifaSeleccionada) {
+        return switch (tarifaSeleccionada) {
+            case "10_vueltas_10_min" -> 15000;
+            case "15_vueltas_15_min" -> 20000;
+            case "20_vueltas_20_min" -> 25000;
+            default -> throw new IllegalArgumentException("Tarifa inválida: " + tarifaSeleccionada);
         };
     }
 
@@ -34,15 +28,15 @@ public class TarifasService {
         return 0.00;
     }
 
-    public int calcularPrecioFinal(int numeroVueltas, int cantPersonas, int visitasMensuales, boolean esCumpleaños) {
-        int precioBase = calcularTarifaBase(numeroVueltas);
+    public int calcularPrecioFinal(String tarifaSeleccionada, int cantPersonas, int visitasMensuales, boolean esCumpleaños) {
+        int precioBase = obtenerTarifa(tarifaSeleccionada);
         double descuentoGrupo = calcularDescuentoGrupo(cantPersonas);
         double descuentoFrecuencia = calcularDescuentoFrecuencia(visitasMensuales);
 
         double descuentoTotal = descuentoGrupo + descuentoFrecuencia;
-        if (esCumpleaños) descuentoTotal += 0.50;  // Descuento especial por cumpleaños
+        if (esCumpleaños) descuentoTotal += 0.50;
 
-        int precioDescontado = (int) (precioBase * (1 - Math.min(descuentoTotal, 0.50)));  // Máximo 50% de descuento
+        int precioDescontado = (int) (precioBase * (1 - Math.min(descuentoTotal, 0.50)));
         int valorIVA = (int) (precioDescontado * 0.19);
 
         return precioDescontado + valorIVA;

@@ -8,12 +8,12 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "cliente")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ClientEntity {
+
     @Id
     @Column(name = "client_id", unique = true, nullable = false)
     private String clientId;
@@ -22,7 +22,7 @@ public class ClientEntity {
     private int visitasMensuales;
 
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @JsonIgnore
     private List<ReservaEntity> reservas;
 
     // Getters y Setters
@@ -30,28 +30,28 @@ public class ClientEntity {
         return clientId;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
     public String getNombreCliente() {
         return nombreCliente;
-    }
-
-    public void setNombreCliente(String nombreCliente) {
-        this.nombreCliente = nombreCliente;
     }
 
     public int getVisitasMensuales() {
         return visitasMensuales;
     }
 
-    public void setVisitasMensuales(int visitasMensuales) {
-        this.visitasMensuales = visitasMensuales;
-    }
-
     public List<ReservaEntity> getReservas() {
         return reservas;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public void setNombreCliente(String nombreCliente) {
+        this.nombreCliente = nombreCliente;
+    }
+
+    public void setVisitasMensuales(int visitasMensuales) {
+        this.visitasMensuales = visitasMensuales;
     }
 
     public void setReservas(List<ReservaEntity> reservas) {

@@ -4,9 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 import jakarta.persistence.*;
-import java.time.LocalTime;
 import java.util.Date;
 import java.util.List;
 
@@ -28,14 +31,14 @@ public class ReservaEntity {
     private Date fecha;
 
     @Column(nullable = false)
-    private LocalTime duracion;
+    private String tarifaSeleccionada;
 
     @Column(nullable = false)
     private boolean esCumpleaños;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
-    @JsonBackReference
+    @JsonIgnore
     private ClientEntity cliente;
 
     @ElementCollection
@@ -44,72 +47,72 @@ public class ReservaEntity {
     private List<String> kartIds;
 
     @OneToOne(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonBackReference(value = "reserva-comprobante") // Identificador unico
+    @JsonBackReference(value = "reserva-comprobante")
     private ComprobanteEntity comprobante;
 
-    //Getters y Setters
     public int getReservaId() {
         return reservaId;
-    }
-
-    public void setReservaId(int reservaId) {
-        this.reservaId = reservaId;
     }
 
     public int getCantPersonas() {
         return cantPersonas;
     }
 
-    public void setCantPersonas(int cantPersonas) {
-        this.cantPersonas = cantPersonas;
+    public String getTarifaSeleccionada() {
+        return tarifaSeleccionada;
     }
 
     public Date getFecha() {
         return fecha;
     }
 
-    public void setFecha(Date fecha) {
-        this.fecha = fecha;
-    }
-
-    public LocalTime getDuracion() {
-        return duracion;
-    }
-
-    public void setDuracion(LocalTime duracion) {
-        this.duracion = duracion;
-    }
-
     public boolean isEsCumpleaños() {
         return esCumpleaños;
-    }
-
-    public void setEsCumpleaños(boolean esCumpleaños) {
-        this.esCumpleaños = esCumpleaños;
     }
 
     public ClientEntity getCliente() {
         return cliente;
     }
 
-    public void setCliente(ClientEntity cliente) {
-        this.cliente = cliente;
-    }
-
-    public String getClientId() {
-        return (cliente != null) ? cliente.getClientId() : null;
+    @JsonProperty("clienteId")
+    public String getClienteId() {
+        return cliente != null ? cliente.getClientId() : null;
     }
 
     public List<String> getKartIds() {
         return kartIds;
     }
 
-    public void setKartIds(List<String> kartIds) {
-        this.kartIds = kartIds;
-    }
-
     public ComprobanteEntity getComprobante() {
         return comprobante;
+    }
+
+    public void setReservaId(int reservaId) {
+        this.reservaId = reservaId;
+    }
+
+    public void setCantPersonas(int cantPersonas) {
+        this.cantPersonas = cantPersonas;
+    }
+
+    public void setFecha(Date fecha) {
+        this.fecha = fecha;
+    }
+
+    public void setTarifaSeleccionada(String tarifaSeleccionada) {
+        this.tarifaSeleccionada = tarifaSeleccionada;
+    }
+
+    public void setEsCumpleaños(boolean esCumpleaños) {
+        this.esCumpleaños = esCumpleaños;
+    }
+
+    public void setCliente(ClientEntity cliente) {
+        this.cliente = cliente;
+    }
+
+    public void setKartIds(List<String> kartIds) {
+        this.kartIds = kartIds;
     }
 
     public void setComprobante(ComprobanteEntity comprobante) {
