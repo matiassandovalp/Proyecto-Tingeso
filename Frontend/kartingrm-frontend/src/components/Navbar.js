@@ -6,8 +6,7 @@ const Navbar = () => {
       <h1>KartingRM</h1>
       <ul className="nav-links">
         <li><Link to="/">Inicio</Link></li>
-        <li><Link to="/reservas">Reservas</Link></li>
-        <li><Link to="/reportes">Reportes</Link></li>
+        <li><Link to="/dashboard">Dashboard</Link></li>
         <li><Link to="/cliente">Clientes</Link></li>
       </ul>
     </nav>

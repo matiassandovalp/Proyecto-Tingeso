@@ -1,7 +1,6 @@
 package kartbackend.entities;
 
 import jakarta.persistence.*;
-
 import java.util.Date;
 import java.util.List;
 
@@ -28,6 +27,8 @@ public class BloqueHorarioEntity {
     @JoinColumn(name = "reserva_id", nullable = false)
     private ReservaEntity reservaAsociada;
 
+    // Getters y setters
+
     public int getId() {
         return id;
     }
@@ -36,12 +37,12 @@ public class BloqueHorarioEntity {
         return fecha;
     }
 
-    public String getHoraFin() {
-        return horaFin;
-    }
-
     public String getHoraInicio() {
         return horaInicio;
+    }
+
+    public String getHoraFin() {
+        return horaFin;
     }
 
     public List<String> getKartsOcupados() {
@@ -52,20 +53,20 @@ public class BloqueHorarioEntity {
         return reservaAsociada;
     }
 
-    public void setFecha(Date fecha) {
-        this.fecha = fecha;
-    }
-
     public void setId(int id) {
         this.id = id;
     }
 
-    public void setHoraFin(String horaFin) {
-        this.horaFin = horaFin;
+    public void setFecha(Date fecha) {
+        this.fecha = fecha;
     }
 
     public void setHoraInicio(String horaInicio) {
         this.horaInicio = horaInicio;
+    }
+
+    public void setHoraFin(String horaFin) {
+        this.horaFin = horaFin;
     }
 
     public void setKartsOcupados(List<String> kartsOcupados) {

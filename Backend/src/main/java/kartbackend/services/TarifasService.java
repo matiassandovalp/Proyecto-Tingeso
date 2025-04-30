@@ -29,14 +29,18 @@ public class TarifasService {
     }
 
     public int calcularPrecioFinal(String tarifaSeleccionada, int cantPersonas, int visitasMensuales, boolean esCumpleaños) {
-        int precioBase = obtenerTarifa(tarifaSeleccionada);
+        int precioUnitario = obtenerTarifa(tarifaSeleccionada);
+        int precioTotalBase = precioUnitario * cantPersonas;
         double descuentoGrupo = calcularDescuentoGrupo(cantPersonas);
         double descuentoFrecuencia = calcularDescuentoFrecuencia(visitasMensuales);
 
         double descuentoTotal = descuentoGrupo + descuentoFrecuencia;
-        if (esCumpleaños) descuentoTotal += 0.50;
+        if (esCumpleaños) {
+            descuentoTotal += 0.50;
+        }
+        descuentoTotal = Math.min(descuentoTotal, 0.50);
 
-        int precioDescontado = (int) (precioBase * (1 - Math.min(descuentoTotal, 0.50)));
+        int precioDescontado = (int) (precioTotalBase * (1 - descuentoTotal));
         int valorIVA = (int) (precioDescontado * 0.19);
 
         return precioDescontado + valorIVA;

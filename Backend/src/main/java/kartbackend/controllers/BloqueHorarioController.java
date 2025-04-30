@@ -1,49 +1,31 @@
 package kartbackend.controllers;
 
-
-import kartbackend.entities.BloqueHorarioEntity;
-import kartbackend.repositories.BloqueHorarioRepository;
+import kartbackend.services.RackService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/rack")
 public class BloqueHorarioController {
 
-    private final BloqueHorarioRepository bloqueHorarioRepository;
+    private final RackService rackService;
 
-    public BloqueHorarioController(BloqueHorarioRepository bloqueHorarioRepository) {
-        this.bloqueHorarioRepository = bloqueHorarioRepository;
+    public BloqueHorarioController(RackService rackService) {
+        this.rackService = rackService;
     }
 
-    // Consultar el estado del rack semanal
-    @GetMapping
-    public List<BloqueHorarioEntity> obtenerRackSemanal(@RequestParam("fechaInicio") Date fechaInicio, @RequestParam("fechaFin") Date fechaFin) {
-        return bloqueHorarioRepository.findByFechaBetween(fechaInicio, fechaFin);
-    }
-
-    // Registrar un nuevo bloque de ocupación cuando se crea una reserva
-    @PostMapping
-    public ResponseEntity<?> agregarBloque(@RequestBody BloqueHorarioEntity bloque) {
-        try {
-            BloqueHorarioEntity nuevoBloque = bloqueHorarioRepository.save(bloque);
-            return ResponseEntity.ok(nuevoBloque);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error al registrar el bloque de ocupación.");
-        }
-    }
-
-    // Eliminar un bloque cuando se cancela la reserva
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarBloque(@PathVariable int id) {
-        if (!bloqueHorarioRepository.existsById(id)) {
-            return ResponseEntity.badRequest().body("No existe un bloque con ese ID.");
-        }
-        bloqueHorarioRepository.deleteById(id);
-        return ResponseEntity.ok("Bloque eliminado correctamente.");
+    // Endpoint para obtener la disponibilidad del rack en el rango solicitado.
+    @GetMapping("/disponibilidad")
+    public ResponseEntity<List<Map<String, Object>>> obtenerDisponibilidad(
+            @RequestParam("fechaInicio") @DateTimeFormat(pattern="yyyy-MM-dd") Date fechaInicio,
+            @RequestParam("fechaFin") @DateTimeFormat(pattern="yyyy-MM-dd") Date fechaFin) {
+        List<Map<String, Object>> eventos = rackService.obtenerRackPorRango(fechaInicio, fechaFin);
+        return ResponseEntity.ok(eventos);
     }
 }

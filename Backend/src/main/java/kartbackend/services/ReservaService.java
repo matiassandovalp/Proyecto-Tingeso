@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.SimpleTimeZone;
 import java.text.SimpleDateFormat;
 
 @Service
@@ -49,24 +50,29 @@ public class ReservaService {
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
         reserva.setCliente(cliente);
 
-        // --- Lógica del rack: Determinar el bloque de ocupación ---
-        // Se obtiene la duración del bloque de acuerdo a la tarifa
+        // VALIDAR QUE LA CANTIDAD DE NOMBRES COINCIDA CON LA CANTIDAD DE PERSONAS
+        if (reserva.getNombresPersonas() == null || reserva.getNombresPersonas().size() != reserva.getCantPersonas()) {
+            throw new IllegalArgumentException("La cantidad de nombres debe coincidir con la cantidad de personas.");
+        }
+
+        // Lógica del rack: Determinar el bloque de ocupación
         int duracionReserva = obtenerDuracionReserva(reserva.getTarifaSeleccionada());
         if (duracionReserva == 0) throw new IllegalArgumentException("Tarifa inválida");
 
-        // Suponemos que reserva.getFecha() incluye la hora de inicio (por ejemplo, "2025-04-29 10:00")
+        // Suponemos que reserva.getFecha() incluye la hora de inicio (fecha y hora en TIMESTAMP)
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(reserva.getFecha());
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+        // Obtenemos la hora de inicio
         String horaInicio = sdf.format(reserva.getFecha());
         calendar.add(Calendar.MINUTE, duracionReserva);
+        // Calculamos la hora de fin
         String horaFin = sdf.format(calendar.getTime());
 
         // Verificar que ninguno de los karts solicitados ya esté reservado en un bloque que solape.
-        // La condición de solapamiento se determina buscando bloques en la misma fecha cuyo
-        // horaInicio es menor que el nuevo bloque’s horaFin y cuyo horaFin es mayor que el nuevo bloque’s horaInicio.
         List<BloqueHorarioEntity> bloquesExistentes =
-                bloqueHorarioRepository.findByFechaAndHoraInicioLessThanAndHoraFinGreaterThan(reserva.getFecha(), horaFin, horaInicio);
+                bloqueHorarioRepository.findByFechaAndHoraInicioLessThanAndHoraFinGreaterThan(
+                        reserva.getFecha(), horaFin, horaInicio);
         for (BloqueHorarioEntity bloque : bloquesExistentes) {
             for (String kartId : reserva.getKartIds()) {
                 if (bloque.getKartsOcupados() != null && bloque.getKartsOcupados().contains(kartId)) {
@@ -74,7 +80,7 @@ public class ReservaService {
                 }
             }
         }
-        // --- Fin de la validación del rack ---
+        // Fin de la validación del rack
 
         // Guardar la reserva
         ReservaEntity nuevaReserva = reservaRepository.save(reserva);
@@ -91,31 +97,38 @@ public class ReservaService {
             bloqueHorarioRepository.save(bloque);
         }
 
-        // --- Creación del comprobante (lógica ya existente) ---
+        //Creación del comprobante
         ComprobanteEntity comprobante = new ComprobanteEntity();
         comprobante.setReserva(nuevaReserva);
         comprobante.setFechaEmision(new Date());
 
-        int precioBase = tarifasService.obtenerTarifa(nuevaReserva.getTarifaSeleccionada());
+        // Precio base unitario
+        int precioUnitario = tarifasService.obtenerTarifa(nuevaReserva.getTarifaSeleccionada());
+        // precio total base = tarifa unitario * cantidad de personas
+        int precioTotalBase = precioUnitario * nuevaReserva.getCantPersonas();
+
         double descuentoGrupo = tarifasService.calcularDescuentoGrupo(nuevaReserva.getCantPersonas());
         double descuentoFrecuencia = tarifasService.calcularDescuentoFrecuencia(nuevaReserva.getCliente().getVisitasMensuales());
 
+        // Se aplican los descuentos globalmente sobre el precio total
         double descuentoTotal = descuentoGrupo + descuentoFrecuencia;
-        if (nuevaReserva.isEsCumpleaños()) descuentoTotal += 0.50;
+        if (nuevaReserva.isEsCumpleaños()) {
+            descuentoTotal += 0.50;
+        }
+        // Limitar el descuento máximo al 50%
         descuentoTotal = Math.min(descuentoTotal, 0.50);
 
-        int precioAjustado = (int) (precioBase * (1 - descuentoTotal));
+        int precioAjustado = (int) (precioTotalBase * (1 - descuentoTotal));
         int valorIVA = (int) (precioAjustado * 0.19);
         int precioFinal = precioAjustado + valorIVA;
 
-        comprobante.setPrecioEstandar(precioBase);
-        comprobante.setDescuentoPersonas((int) (precioBase * descuentoGrupo));
-        comprobante.setDescuentoPersonal((int) (precioBase * descuentoFrecuencia));
+        comprobante.setPrecioEstandar(precioTotalBase);
+        comprobante.setDescuentoPersonas((int) (precioTotalBase * descuentoGrupo));
+        comprobante.setDescuentoPersonal((int) (precioTotalBase * descuentoFrecuencia));
         comprobante.setPrecioAjustado(precioAjustado);
         comprobante.setValorIVA(valorIVA);
         comprobante.setPrecioFinal(precioFinal);
 
-        // Extra: calcular número de vueltas a partir del nombre de la tarifa
         int numeroVueltas = obtenerNumeroVueltas(nuevaReserva.getTarifaSeleccionada());
         comprobante.setNumeroVueltas(numeroVueltas);
 
@@ -125,7 +138,7 @@ public class ReservaService {
         return reservaRepository.save(nuevaReserva);
     }
 
-    // Método auxiliar para parsear número de vueltas
+    // Método auxiliar para parsear el número de vueltas
     private int obtenerNumeroVueltas(String tarifaSeleccionada) {
         if (tarifaSeleccionada == null) return 0;
         if (tarifaSeleccionada.startsWith("10_vueltas")) return 10;
