@@ -1,33 +1,41 @@
-HELP.md
-target/
+# Archivos generados de compilación y empaquetado
+/target/  
+/build/
+
+# La carpeta de ayuda (si existe)
+/HELP.md  
+
+# Ignorar archivos generados por el wrapper de Maven, excepto el JAR que se necesita para que funcione el wrapper
 !.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
+
+# Ignorar archivos target dentro de src (si existiesen)
+!**/src/main/**/target/  
 !**/src/test/**/target/
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+### Archivos específicos de STS (Spring Tool Suite)
+.apt_generated  
+.classpath  
+.factorypath  
+.project  
+.settings  
+.springBeans  
+.sts4-cache  
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
+### Archivos específicos de IntelliJ IDEA
+.idea/  
+*.iws  
+*.iml  
+*.ipr  
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
+### Archivos específicos de NetBeans
+/nbproject/private/  
+/nbbuild/  
+/dist/  
+/nbdist/  
+.nb-gradle/  
+# Asegurarse de que los directorios build/ generados dentro de src no se ignoren si los necesitas versionar
+!**/src/main/**/build/  
+!**/src/test/**/build/  
 
-### VS Code ###
+### Archivos específicos de VS Code (si usas este editor)
 .vscode/

@@ -49,9 +49,13 @@ public class ReservaEntity {
     @Column(name = "kart_id")
     private List<String> kartIds;
 
+    // Mantenemos la relación @OneToOne para la persistencia:
     @OneToOne(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonBackReference(value = "reserva-comprobante")
+    // Removemos (o comentamos) la anotación @JsonBackReference para que no se omita este campo
+    // @JsonBackReference(value = "reserva-comprobante")
     private ComprobanteEntity comprobante;
+
+
 
     @JsonProperty("clienteId")
     public String getClienteId() {
@@ -90,9 +94,11 @@ public class ReservaEntity {
         return kartIds;
     }
 
+    @JsonProperty("comprobante")
     public ComprobanteEntity getComprobante() {
         return comprobante;
     }
+
 
     public void setReservaId(int reservaId) {
         this.reservaId = reservaId;

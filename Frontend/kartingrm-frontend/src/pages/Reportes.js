@@ -1,171 +1,179 @@
-import React, { useEffect, useState } from "react";
-import {
-  Paper,
-  Typography,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Tabs,
-  Tab,
-  Box,
-  Alert,
-} from "@mui/material";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const Reportes = () => {
-  const [tabValue, setTabValue] = useState(0);
-  const [reportVueltas, setReportVueltas] = useState([]);
-  const [reportPersonas, setReportPersonas] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
+  // Configuración del rango (por defecto, mes actual)
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+  
+  const getFormattedDate = (date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const defaultStartDate = new Date(currentYear, currentMonth, 1);
+  const defaultEndDate = new Date(currentYear, currentMonth + 1, 0);
+  
+  const [fechaInicio, setFechaInicio] = useState(getFormattedDate(defaultStartDate));
+  const [fechaFin, setFechaFin] = useState(getFormattedDate(defaultEndDate));
+  
+  const [reporteIngresos, setReporteIngresos] = useState(null);
+  const [reporteReservas, setReporteReservas] = useState(null);
+
+  const fetchReporteIngresos = useCallback(() => {
+    const url = `http://localhost:8090/api/reportes/detallado?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+    axios.get(url)
+      .then(response => {
+        setReporteIngresos(response.data);
+      })
+      .catch(error => {
+        console.error("Error al obtener reporte detallado de ingresos:", error);
+      });
+  }, [fechaInicio, fechaFin]);
+
+  const fetchReporteReservas = useCallback(() => {
+    const url = `http://localhost:8090/api/reportes/reservas-detallado?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+    axios.get(url)
+      .then(response => {
+        setReporteReservas(response.data);
+      })
+      .catch(error => {
+        console.error("Error al obtener reporte detallado de reservas:", error);
+      });
+  }, [fechaInicio, fechaFin]);
 
   useEffect(() => {
-    console.log("Reportes: Iniciando consulta de reservas.");
-    setLoading(true);
-    axios
-      .get("http://localhost:8090/api/reservas")
-      .then((res) => {
-        console.log("Reportes: Reservas recibidas:", res.data);
-        const { reportVueltas, reportPersonas } = computeReports(res.data);
-        console.log("Reportes: Reporte de Vueltas:", reportVueltas);
-        console.log("Reportes: Reporte de Personas:", reportPersonas);
-        setReportVueltas(reportVueltas);
-        setReportPersonas(reportPersonas);
-      })
-      .catch((e) => {
-        console.error("Reportes: Error al consultar reservas", e);
-        setErrorMsg("Error al cargar las reservas.");
-      })
-      .finally(() => {
-        console.log("Reportes: Finalizando consulta de reservas.");
-        setLoading(false);
-      });
-  }, []);
+    fetchReporteIngresos();
+    fetchReporteReservas();
+  }, [fetchReporteIngresos, fetchReporteReservas]);
 
-  // Función para transformar y agrupar los datos de las reservas en reportes
-  const computeReports = (reservas) => {
-    const reportVueltasObj = {};
-    const reportPersonasObj = {};
-
-    // Función para extraer el mes (solo enero, febrero o marzo) a partir de la fecha de la reserva
-    const getMonth = (dateStr) => {
-      const date = new Date(dateStr);
-      const month = date.getMonth(); // 0=enero, 1=febrero, 2=marzo, etc.
-      if (month === 0) return "enero";
-      if (month === 1) return "febrero";
-      if (month === 2) return "marzo";
-      return null; // Se ignoran reservas fuera de estos meses
-    };
-
-    // Función para agrupar según la cantidad de personas
-    const groupByPersonas = (cantidad) => {
-      if (cantidad <= 2) return "1-2 personas";
-      else if (cantidad <= 5) return "3-5 personas";
-      else if (cantidad <= 10) return "6-10 personas";
-      else return "11-15 personas";
-    };
-
-    reservas.forEach((reserva) => {
-      // Verificamos que exista comprobante para extraer el precio final
-      if (!reserva.comprobante) return;
-      const price = reserva.comprobante.precioFinal || 0;
-      const month = getMonth(reserva.fecha);
-      if (!month) return; // Ignoramos si no es enero, febrero o marzo
-
-      // Agrupar por tarifa (vueltas/tiempo) a partir del campo "tarifaSeleccionada"
-      const tarifa = reserva.tarifaSeleccionada;
-      if (!reportVueltasObj[tarifa]) {
-        reportVueltasObj[tarifa] = { tarifa, enero: 0, febrero: 0, marzo: 0, total: 0 };
-      }
-      reportVueltasObj[tarifa][month] += price;
-      reportVueltasObj[tarifa].total += price;
-
-      // Agrupar por cantidad de personas usando el campo "cantPersonas"
-      const group = groupByPersonas(reserva.cantPersonas);
-      if (!reportPersonasObj[group]) {
-        reportPersonasObj[group] = { rango: group, enero: 0, febrero: 0, marzo: 0, total: 0 };
-      }
-      reportPersonasObj[group][month] += price;
-      reportPersonasObj[group].total += price;
-    });
-
-    return {
-      reportVueltas: Object.values(reportVueltasObj),
-      reportPersonas: Object.values(reportPersonasObj),
-    };
+  // Funciones para navegar entre meses (como antes)
+  const handlePrevMonth = () => {
+    const start = new Date(fechaInicio + "T00:00:00");
+    start.setMonth(start.getMonth() - 1);
+    const newStart = new Date(start.getFullYear(), start.getMonth(), 1);
+    const newEnd = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    setFechaInicio(getFormattedDate(newStart));
+    setFechaFin(getFormattedDate(newEnd));
   };
 
-  const handleTabChange = (event, newValue) => {
-    console.log("Reportes: Cambiando pestaña a:", newValue);
-    setTabValue(newValue);
+  const handleNextMonth = () => {
+    const start = new Date(fechaInicio + "T00:00:00");
+    start.setMonth(start.getMonth() + 1);
+    const newStart = new Date(start.getFullYear(), start.getMonth(), 1);
+    const newEnd = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    setFechaInicio(getFormattedDate(newStart));
+    setFechaFin(getFormattedDate(newEnd));
   };
 
   return (
-    <Paper sx={{ p: 2, m: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Reportes de Ingresos
-      </Typography>
-      {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
-      <Tabs value={tabValue} onChange={handleTabChange}>
-        <Tab label="Por Vueltas/tiempo" />
-        <Tab label="Por Número de Personas" />
-      </Tabs>
-      <Box sx={{ mt: 2 }}>
-        {tabValue === 0 && (
-          <ReportTable
-            title="Reporte por Vueltas/tiempo"
-            data={reportVueltas}
-            headers={["Tarifa", "Enero", "Febrero", "Marzo", "Total"]}
-            keys={["tarifa", "enero", "febrero", "marzo", "total"]}
-            loading={loading}
+    <div style={{ padding: "20px" }}>
+      <h4>Reporte Detallado de Ingresos</h4>
+      <div
+        className="notification-message"
+        style={{
+          backgroundColor: "#e0f7fa",
+          border: "1px solid #4dd0e1",
+          padding: "10px",
+          borderRadius: "5px",
+          marginBottom: "20px",
+          fontSize: "0.9rem"
+        }}
+      >
+        <strong>Nota:</strong> El reporte se calcula en función de la{" "}
+        <em>fecha de emisión</em> del comprobante (la fecha en que se facturó la reserva).
+      </div>
+      <p>
+        <strong>Período:</strong> {fechaInicio} a {fechaFin}
+      </p>
+      <div style={{ marginBottom: "10px" }}>
+        <label>
+          Fecha Inicio:{" "}
+          <input
+            type="date"
+            value={fechaInicio}
+            onChange={(e) => setFechaInicio(e.target.value)}
           />
-        )}
-        {tabValue === 1 && (
-          <ReportTable
-            title="Reporte por Número de Personas"
-            data={reportPersonas}
-            headers={["Grupo de Personas", "Enero", "Febrero", "Marzo", "Total"]}
-            keys={["rango", "enero", "febrero", "marzo", "total"]}
-            loading={loading}
+        </label>
+        <label style={{ marginLeft: "20px" }}>
+          Fecha Fin:{" "}
+          <input
+            type="date"
+            value={fechaFin}
+            onChange={(e) => setFechaFin(e.target.value)}
           />
-        )}
-      </Box>
-    </Paper>
-  );
-};
+        </label>
+      </div>
+      <div style={{ marginBottom: "20px" }}>
+        <button onClick={handlePrevMonth}>Mes Anterior</button>
+        <button onClick={handleNextMonth} style={{ marginLeft: "20px" }}>
+          Mes Siguiente
+        </button>
+      </div>
 
-const ReportTable = ({ title, data, headers, keys, loading }) => {
-  console.log(`ReportTable (${title}): Renderizando con data:`, data, "y loading =", loading);
-  if (loading) return <Typography>Cargando reporte...</Typography>;
-  if (!data || data.length === 0)
-    return <Typography>No se encontraron datos para {title.toLowerCase()}.</Typography>;
-
-  return (
-    <>
-      <Typography variant="h6" gutterBottom>
-        {title}
-      </Typography>
-      <Table>
-        <TableHead>
-          <TableRow>
-            {headers.map((head, i) => (
-              <TableCell key={i}>{head}</TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((row, i) => (
-            <TableRow key={i}>
-              {keys.map((key, j) => (
-                <TableCell key={j}>{row[key]}</TableCell>
+      {reporteIngresos ? (
+        <div>
+          <p>
+            <strong>Total de Ingresos:</strong> ${reporteIngresos.totalIngreso}
+          </p>
+          <h5>Ingresos por Tarifa</h5>
+          <ul>
+            {reporteIngresos.ingresosPorTarifa &&
+              Array.from(reporteIngresos.ingresosPorTarifa).map((item, index) => (
+                <li key={index}>
+                  <strong>Tarifa:</strong> {item.tarifa} -{" "}
+                  <strong>Reservas:</strong> {item.reservas} -{" "}
+                  <strong>Ingreso:</strong> ${item.totalIngreso}
+                </li>
               ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </>
+          </ul>
+          <h5>Ingresos por Grupo de Personas</h5>
+          <ul>
+            {reporteIngresos.ingresosPorGrupo &&
+              Array.from(reporteIngresos.ingresosPorGrupo).map((item, index) => (
+                <li key={index}>
+                  <strong>Grupo de {item.cantPersonas} personas</strong> -{" "}
+                  <strong>Reservas:</strong> {item.reservas} -{" "}
+                  <strong>Ingreso:</strong> ${item.totalIngreso}
+                </li>
+              ))}
+          </ul>
+        </div>
+      ) : (
+        <p>Cargando reporte detallado de ingresos...</p>
+      )}
+
+      <hr style={{ margin: "40px 0" }} />
+
+      <h4>Reporte Detallado de Reservas</h4>
+      {reporteReservas ? (
+        <div>
+          <p>
+            <strong>Total de Reservas:</strong> {reporteReservas.totalReservas}
+          </p>
+          <ul>
+            {reporteReservas.reservas &&
+              reporteReservas.reservas.map((reserva, index) => (
+                <li key={index}>
+                  <strong>Reserva ID:</strong> {reserva.reservaId} |{" "}
+                  <strong>Fecha Reserva:</strong>{" "}
+                  {new Date(reserva.fechaReserva).toLocaleDateString()} |{" "}
+                  <strong>Tarifa:</strong> {reserva.tarifaSeleccionada} |{" "}
+                  <strong>Cantidad de Personas:</strong> {reserva.cantPersonas}{" "}
+                  {reserva.clienteId && (
+                    <>| <strong>Cliente ID:</strong> {reserva.clienteId}</>
+                  )}
+                </li>
+              ))}
+          </ul>
+        </div>
+      ) : (
+        <p>Cargando reporte detallado de reservas...</p>
+      )}
+    </div>
   );
 };
 

@@ -19,7 +19,7 @@ const Reservas = () => {
 
         //Asociamos cada reserva con su comprobante correctamente por `reservaId`
         const reservasConComprobantes = reservasData.map(reserva => {
-          const comprobanteEncontrado = comprobantesData.find(c => c.reserva.reservaId === reserva.reservaId);
+          const comprobanteEncontrado = comprobantesData.find(c => c.reservaId === reserva.reservaId);
           console.log(`Vinculando reserva ${reserva.reservaId} con comprobante:`, comprobanteEncontrado);
           return { ...reserva, comprobante: comprobanteEncontrado ?? null };
         });

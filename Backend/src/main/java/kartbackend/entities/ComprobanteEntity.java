@@ -1,5 +1,7 @@
 package kartbackend.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,8 +32,10 @@ public class ComprobanteEntity {
 
     @OneToOne
     @JoinColumn(name = "reserva_id", nullable = false)
-    @JsonManagedReference(value = "reserva-comprobante") // Usa el mismo identificador único
+    // Eliminamos @JsonManagedReference y añadimos @JsonIgnore para evitar la recursión:
+    @JsonIgnore
     private ReservaEntity reserva;
+
 
 
     public void setFechaEmision(Date fechaEmision) {
@@ -96,6 +100,16 @@ public class ComprobanteEntity {
 
     public int getValorIVA() {
         return valorIVA;
+    }
+
+    @JsonProperty("reservaId")
+    public Integer getReservaId() {
+        return reserva != null ? reserva.getReservaId() : null;
+    }
+
+    @JsonIgnore
+    public ReservaEntity getReserva() {
+        return this.reserva;
     }
 
     public void setReserva(ReservaEntity reserva) {

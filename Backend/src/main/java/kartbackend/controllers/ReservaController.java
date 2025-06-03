@@ -9,10 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 @CrossOrigin(origins = "http://localhost:3000")
 @RestController
@@ -53,8 +50,10 @@ public class ReservaController {
 
             // Fecha y hora de la reserva:
             // Se espera el string en formato ISO: "yyyy-MM-dd'T'HH:mm" (por ejemplo, "2025-04-29T10:00")
+            // ReservaController: parseo de fecha
             String fechaStr = (String) request.get("fecha");
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm", Locale.getDefault());
+            sdf.setTimeZone(TimeZone.getTimeZone("America/Santiago")); // Fuerza la zona horaria
             Date fecha = sdf.parse(fechaStr);
             reserva.setFecha(fecha);
 

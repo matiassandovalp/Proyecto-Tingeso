@@ -1,23 +1,25 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencias y módulos instalados
+/node_modules/  
+/.pnp  
+.pnp.js  
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# Output de pruebas y cobertura
+/coverage/
 
-# testing
-/coverage
+# Archivos de compilación para producción (por ejemplo, si usas Create React App)
+/build/
 
-# production
-/build
+# Archivos de configuración locales y env (estas variables pueden contener credenciales locales)
+.env.local  
+.env.development.local  
+.env.test.local  
+.env.production.local  
 
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
+# Archivos de log
+npm-debug.log*  
+yarn-debug.log*  
 yarn-error.log*
+
+# Otros archivos del sistema que no necesitan estar en Git
+.DS_Store
+Thumbs.db
